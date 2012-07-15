@@ -42,7 +42,7 @@ public class Cucumber implements Runnable {
 
 	protected HashMap<Integer, ServerFrame> servers = new Constructors().setupServers();
 	protected HashMap<Integer, ErrorFrame> errors = new Constructors().errorHandling();
-	protected HashMap<Integer, Player> players = new HashMap<Integer, Player>();
+	public HashMap<Integer, Player> players = new HashMap<Integer, Player>();
 	
 	private int myPlayerID;
 	private Thread t;
