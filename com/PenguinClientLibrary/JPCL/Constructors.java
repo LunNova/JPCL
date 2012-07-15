@@ -19,12 +19,39 @@ package com.PenguinClientLibrary.JPCL;
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class Constructors {
+import java.io.IOException;
 
+public class Constructors {
+	
+	public void saveURL(String filename, String urlString) throws MalformedURLException, IOException{
+		BufferedInputStream in = null;
+		FileOutputStream fout = null;
+		try{
+			in = new BufferedInputStream(new URL(urlString).openStream());
+			fout = new FileOutputStream(filename);
+			
+			byte[] data = new byte[1024];
+			int count;
+			while ((count = in.read(data, 0, 1024)) != -1){
+				fout.write(data, 0, count);
+			}
+		}
+		finally{
+			if(in != null)
+				in.close();
+			if(fout != null)
+				fout.close();
+		}
+	}
+
+	
 	public HashMap<Integer, ServerFrame> setupServers(){
 		int ID, port;
 		String name, ip;
@@ -33,8 +60,8 @@ public class Constructors {
 		HashMap<Integer, ServerFrame> temp = new HashMap<Integer, ServerFrame>();
 		
 		try{
-			URL u = new Constructors().getClass().getResource("servers.ini");
-			INIParser i = new INIParser(u.getFile());
+			saveURL("servers.ini", "http://penguinclientlibrary.com/pcl/servers.ini");
+			INIParser i = new INIParser("servers.ini");
 			Iterator<String> in = i.getSections();
 			
 			while(in.hasNext()){
@@ -61,8 +88,8 @@ public class Constructors {
 		HashMap<Integer, ErrorFrame> temp = new HashMap<Integer, ErrorFrame>();
 		
 		try{
-			URL u = new Constructors().getClass().getResource("errors.ini");
-			INIParser i = new INIParser(u.getFile());
+			saveURL("errors.ini", "http://penguinclientlibrary.com/pcl/errors.ini");
+			INIParser i = new INIParser("errors.ini");
 			Iterator<String> in = i.getSections();
 			
 			while(in.hasNext()){
