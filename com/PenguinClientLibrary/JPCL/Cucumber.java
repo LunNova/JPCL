@@ -36,7 +36,7 @@ import java.util.ArrayList;
 
 public abstract class Cucumber implements Runnable {
 	
-	private boolean debug_enabled, notifications_enabled;
+	private boolean debug_enabled, notifications_enabled, store_players, is_connected = false;
 	private String last_sent = "", version = "2.0";
 	private ArrayList<String> recv_buffer = new ArrayList<String>();
 
@@ -56,12 +56,14 @@ public abstract class Cucumber implements Runnable {
 		this.checkVersion();
 		this.debug_enabled = false;
 		this.notifications_enabled = true;
+		this.store_players = true;
 	}
 	
-	public Cucumber(boolean notifications, boolean debug){
+	public Library(boolean notifications, boolean debug, boolean players){
 		this.checkVersion();
 		this.notifications_enabled = notifications;
 		this.debug_enabled = debug;
+		this.store_players = players;
 	}
 	
 	//// General Methods ////
@@ -114,7 +116,7 @@ public abstract class Cucumber implements Runnable {
         InputStream is = url.openConnection().getInputStream();
         BufferedReader reader = new BufferedReader( new InputStreamReader( is )  );
         String line = null;
-        while( ( line = reader.readLine() ) != null )  {
+        while((line = reader.readLine()) != null){
         	data = line;
         }
         reader.close();
@@ -150,7 +152,7 @@ public abstract class Cucumber implements Runnable {
 	//// Data Stream Methods ////
 	
 	public void run(){
-		while(true){
+		while(this.is_connected){
 			if(this.socket.isClosed() == false){
 				this.recvPacket();
 			}
@@ -286,7 +288,11 @@ public abstract class Cucumber implements Runnable {
 	
 	private String generateKey(String password, String randKey){
 		return this.encryptPassword(password + randKey) + password;
-	}	
+	}
+	
+	public boolean isConnected(){
+		return this.is_connected;
+	}
 	
 	public boolean connect(String username, String password, String server){		
 		for(ServerFrame i : servers.values()){
@@ -306,6 +312,7 @@ public abstract class Cucumber implements Runnable {
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			out = new PrintWriter(socket.getOutputStream(), true);
 			
+			this.is_connected = true;
 			this.t = new Thread(this);
 			t.start();
 		
@@ -321,6 +328,7 @@ public abstract class Cucumber implements Runnable {
 			out.close();
 			
 			if(data.indexOf("%e%-1%") != -1){
+				this.is_connected = false;
 				return false;
 			}
 			
@@ -594,9 +602,13 @@ public abstract class Cucumber implements Runnable {
 				// Update players array with new player information from the room
 				for(int i = 5; i <= packetArray.length - 1; i++){
 					user_id = Integer.parseInt(packetArray[i].substring(0, packetArray[i].indexOf("|")));
-					if(user_id == this.myPlayerID)
+					if(user_id == this.myPlayerID){
 						this.players.get(this.myPlayerID).parsePlayerObject(packetArray[i]);
-					else{
+						if(this.store_players == false){
+							break;
+						}
+					}
+					else if(this.store_players == true){
 						Player p = new Player();
 						p.parsePlayerObject(packetArray[i]);
 						this.players.put(user_id, p);
@@ -616,7 +628,7 @@ public abstract class Cucumber implements Runnable {
 			else if(handler.equals("ap")){
 				Player p = new Player();
 				p.parsePlayerObject(packetArray[4]);
-				if(p.getID() != this.myPlayerID){
+				if(p.getID() != this.myPlayerID && this.store_players == true){
 					this.players.put(p.getID(), p);
 					this.notification(players.get(p.getID()).getNickname() + " has joined the room");
 				}
@@ -626,7 +638,7 @@ public abstract class Cucumber implements Runnable {
 			else if(handler.equals("rp")){
 				int user_id = Integer.parseInt(packetArray[4]);
 				this.notification(players.get(user_id).getNickname() + " has left the room");
-				if(user_id != this.myPlayerID){
+				if(user_id != this.myPlayerID && this.store_players == true){
 					this.players.remove(user_id);
 				}
 			}
@@ -760,63 +772,64 @@ public abstract class Cucumber implements Runnable {
 			else if(handler.equals("se")){		
 				int user_id = Integer.parseInt(packetArray[4]);
 				int emote_id = Integer.parseInt(packetArray[5]);
-				// We should probably use an emote hashtable instead
-				if(emote_id == 1)
-					this.notification(players.get(user_id).getNickname() + " emoted :D");
-				else if(emote_id == 2)
-					this.notification(players.get(user_id).getNickname() + " emoted :)");
-				else if(emote_id == 3)
-					this.notification(players.get(user_id).getNickname() + " emoted :|");
-				else if(emote_id == 4)
-					this.notification(players.get(user_id).getNickname() + " emoted :(");
-				else if(emote_id == 5)
-					this.notification(players.get(user_id).getNickname() + " emoted :o");
-				else if(emote_id == 6)
-					this.notification(players.get(user_id).getNickname() + " emoted :P");
-				else if(emote_id == 7)
-					this.notification(players.get(user_id).getNickname() + " emoted ;)");
-				else if(emote_id == 8)
-					this.notification(players.get(user_id).getNickname() + " emoted :sick:");
-				else if(emote_id == 9)
-					this.notification(players.get(user_id).getNickname() + " emoted >:(");
-				else if(emote_id == 10)
-					this.notification(players.get(user_id).getNickname() + " emoted :'(");
-				else if(emote_id == 11)
-					this.notification(players.get(user_id).getNickname() + " emoted :\\");
-				else if(emote_id == 12)
-					this.notification(players.get(user_id).getNickname() + " emoted :lightbulb:");
-				else if(emote_id == 13)
-					this.notification(players.get(user_id).getNickname() + " emoted :coffee:");
-				else if(emote_id == 16)
-					this.notification(players.get(user_id).getNickname() + " emoted :flower:");
-				else if(emote_id == 17)
-					this.notification(players.get(user_id).getNickname() + " emoted :clover:");
-				else if(emote_id == 18)
-					this.notification(players.get(user_id).getNickname() + " emoted :game:");
-				else if(emote_id == 19)
-					this.notification(players.get(user_id).getNickname() + " emoted :fart:");
-				else if(emote_id == 20)
-					this.notification(players.get(user_id).getNickname() + " emoted :coin:");
-				else if(emote_id == 21)
-					this.notification(players.get(user_id).getNickname() + " emoted :puffle:");
-				else if(emote_id == 22)
-					this.notification(players.get(user_id).getNickname() + " emoted :sun:");
-				else if(emote_id == 23)
-					this.notification(players.get(user_id).getNickname() + " emoted :moon:");
-				else if(emote_id == 24)
-					this.notification(players.get(user_id).getNickname() + " emoted :pizza:");
-				else if(emote_id == 25)
-					this.notification(players.get(user_id).getNickname() + " emoted :igloo:");
-				else if(emote_id == 26)
-					this.notification(players.get(user_id).getNickname() + " emoted :pink ice cream:");
-				else if(emote_id == 27)
-					this.notification(players.get(user_id).getNickname() + " emoted :brown ice cream:");
-				else if(emote_id == 28)
-					this.notification(players.get(user_id).getNickname() + " emoted :cake:");
-				else if(emote_id == 29)
-					this.notification(players.get(user_id).getNickname() + " emoted emoted :popcorn:");
-				else if(emote_id == 30)
-					this.notification(players.get(user_id).getNickname() + " emoted  <3");
+				if(this.players.containsKey(user_id)){
+					if(emote_id == 1)
+						this.notification(players.get(user_id).getNickname() + " emoted :D");
+					else if(emote_id == 2)
+						this.notification(players.get(user_id).getNickname() + " emoted :)");
+					else if(emote_id == 3)
+						this.notification(players.get(user_id).getNickname() + " emoted :|");
+					else if(emote_id == 4)
+						this.notification(players.get(user_id).getNickname() + " emoted :(");
+					else if(emote_id == 5)
+						this.notification(players.get(user_id).getNickname() + " emoted :o");
+					else if(emote_id == 6)
+						this.notification(players.get(user_id).getNickname() + " emoted :P");
+					else if(emote_id == 7)
+						this.notification(players.get(user_id).getNickname() + " emoted ;)");
+					else if(emote_id == 8)
+						this.notification(players.get(user_id).getNickname() + " emoted :sick:");
+					else if(emote_id == 9)
+						this.notification(players.get(user_id).getNickname() + " emoted >:(");
+					else if(emote_id == 10)
+						this.notification(players.get(user_id).getNickname() + " emoted :'(");
+					else if(emote_id == 11)
+						this.notification(players.get(user_id).getNickname() + " emoted :\\");
+					else if(emote_id == 12)
+						this.notification(players.get(user_id).getNickname() + " emoted :lightbulb:");
+					else if(emote_id == 13)
+						this.notification(players.get(user_id).getNickname() + " emoted :coffee:");
+					else if(emote_id == 16)
+						this.notification(players.get(user_id).getNickname() + " emoted :flower:");
+					else if(emote_id == 17)
+						this.notification(players.get(user_id).getNickname() + " emoted :clover:");
+					else if(emote_id == 18)
+						this.notification(players.get(user_id).getNickname() + " emoted :game:");
+					else if(emote_id == 19)
+						this.notification(players.get(user_id).getNickname() + " emoted :fart:");
+					else if(emote_id == 20)
+						this.notification(players.get(user_id).getNickname() + " emoted :coin:");
+					else if(emote_id == 21)
+						this.notification(players.get(user_id).getNickname() + " emoted :puffle:");
+					else if(emote_id == 22)
+						this.notification(players.get(user_id).getNickname() + " emoted :sun:");
+					else if(emote_id == 23)
+						this.notification(players.get(user_id).getNickname() + " emoted :moon:");
+					else if(emote_id == 24)
+						this.notification(players.get(user_id).getNickname() + " emoted :pizza:");
+					else if(emote_id == 25)
+						this.notification(players.get(user_id).getNickname() + " emoted :igloo:");
+					else if(emote_id == 26)
+						this.notification(players.get(user_id).getNickname() + " emoted :pink ice cream:");
+					else if(emote_id == 27)
+						this.notification(players.get(user_id).getNickname() + " emoted :brown ice cream:");
+					else if(emote_id == 28)
+						this.notification(players.get(user_id).getNickname() + " emoted :cake:");
+					else if(emote_id == 29)
+						this.notification(players.get(user_id).getNickname() + " emoted emoted :popcorn:");
+					else if(emote_id == 30)
+						this.notification(players.get(user_id).getNickname() + " emoted  <3");
+				}
 			}
 			
 			// Snowball handler
@@ -824,35 +837,45 @@ public abstract class Cucumber implements Runnable {
 				int user_id = Integer.parseInt(packetArray[4]);
 				String x = packetArray[5];
 				String y = packetArray[6];
-				this.notification(players.get(user_id).getNickname() + " threw a snowball to (" + x + ", " + y + ")");
+				if(this.players.containsKey(user_id)){
+					this.notification(players.get(user_id).getNickname() + " threw a snowball to (" + x + ", " + y + ")");
+				}
 			}
 			
 			// Send Message handler
 			else if(handler.equals("sm")){
 				int user_id = Integer.parseInt(packetArray[4]);
 				String message = packetArray[5];
-				this.notification(players.get(user_id).getNickname() + " said " + message);
+				if(this.players.containsKey(user_id)){
+					this.notification(players.get(user_id).getNickname() + " said " + message);
+				}
 			}
 
 			// Phrase Chat handler
 			else if(handler.equals("sc")){
 				int user_id = Integer.parseInt(packetArray[4]);
 				String encMsg = packetArray[5];
-				//notification(players.get(user_id).getNickname() + "said " + parseChatMessage(encMsg));
+				//~ parseChatMessage is buggy. Use at own risk.
+				//~ if(this.players.containsKey(user_id)){
+					//~ notification(players.get(user_id).getNickname() + "said " + parseChatMessage(encMsg));
+				//~ }
 			}	
 			
 			// Send Safe Message handler
 			else if(handler.equals("ss")){
 				int user_id = Integer.parseInt(packetArray[4]);
 				String message_id = packetArray[5];
-				this.notification(players.get(user_id).getNickname() + " safe-messaged " + message_id);
+				if(this.players.containsKey(user_id)){
+					this.notification(players.get(user_id).getNickname() + " safe-messaged " + message_id);
+				}
 			}
 			
 			// Send Joke handler
 			else if(handler.equals("sj")){
 				int user_id = Integer.parseInt(packetArray[4]);
 				String joke_id = packetArray[5];
-				this.notification(players.get(user_id).getNickname() + " joked " + joke_id);
+				if(this.players.containsKey(user_id))
+					this.notification(players.get(user_id).getNickname() + " joked " + joke_id);
 			}
 
 			// Send Frame handler
@@ -906,10 +929,12 @@ public abstract class Cucumber implements Runnable {
 			else if(handler.equals("sa")){
 				int user_id = Integer.parseInt(packetArray[4]);
 				int action = Integer.parseInt(packetArray[5]);
-				if(action == 25)
-					this.notification(this.players.get(user_id).getNickname() + " waved");
-				else
-					this.notification(this.players.get(user_id).getNickname() + " sent unknown action " + action);
+				if(this.players.containsKey(user_id)){
+					if(action == 25)
+						this.notification(this.players.get(user_id).getNickname() + " waved");
+					else
+						this.notification(this.players.get(user_id).getNickname() + " sent unknown action " + action);
+				}
 			}
 		}
 	}
@@ -918,6 +943,8 @@ public abstract class Cucumber implements Runnable {
 			this.socket.close();
 			this.in.close();
 			this.out.close();
+			this.is_connected = false;
+			System.out.println(this.now() + "You are now disconnected.");
 		}
 		catch(IOException e){}
 	}	
