@@ -34,7 +34,7 @@ import java.util.Random;
 import java.util.HashMap;
 import java.util.ArrayList;
 
-public abstract class Cucumber implements Runnable {
+public class Cucumber implements Runnable {
 	
 	private boolean debug_enabled, notifications_enabled, store_players, is_connected = false;
 	private String last_sent = "", version = "2.0";
@@ -59,7 +59,7 @@ public abstract class Cucumber implements Runnable {
 		this.store_players = true;
 	}
 	
-	public Library(boolean notifications, boolean debug, boolean players){
+	public Cucumber(boolean notifications, boolean debug, boolean players){
 		this.checkVersion();
 		this.notifications_enabled = notifications;
 		this.debug_enabled = debug;
