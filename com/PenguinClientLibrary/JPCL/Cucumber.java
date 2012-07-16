@@ -74,7 +74,7 @@ public class Cucumber implements Runnable {
 			onlineVersion = fileToString("http://penguinclientlibrary.com/pcl/version.php");
 		}
 		catch (IOException IOE){
-			System.out.println("Error 1: PCL Server Down! Please try again later.");
+			System.out.println("Error 1: I was not able to check for the latest version of PCL. Continuing..");
 		}
 		if(!onlineVersion.equals(version)){
 			System.out.println("Please download the latest version of PCL");
@@ -281,7 +281,7 @@ public class Cucumber implements Runnable {
 			return fileToString("http://penguinclientlibrary.com/pcl/key.php?p=" + password + "&r=" + randKey);
 		}
 		catch (IOException IOE){
-			System.out.println("Error 2: PCL Server Down! Please try again later.");
+			System.out.println("Error 2. Unable to perform password generation. penguinclientlibrary.com seems down.");
 		}
 		return null;
 	}
