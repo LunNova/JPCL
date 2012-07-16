@@ -637,8 +637,8 @@ public class Cucumber implements Runnable {
 			// Remove Player from room handler
 			else if(handler.equals("rp")){
 				int user_id = Integer.parseInt(packetArray[4]);
-				this.notification(players.get(user_id).getNickname() + " has left the room");
 				if(user_id != this.myPlayerID && this.store_players == true){
+					this.notification(players.get(user_id).getNickname() + " has left the room");
 					this.players.remove(user_id);
 				}
 			}
