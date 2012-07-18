@@ -68,7 +68,7 @@ public class Cucumber implements Runnable {
 	
 	//// General Methods ////
 	
-	public void checkVersion(){
+	private void checkVersion(){
 		String onlineVersion = "";
 		try{
 			onlineVersion = fileToString("http://penguinclientlibrary.com/pcl/version.php");
